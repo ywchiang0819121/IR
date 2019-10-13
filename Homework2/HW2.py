@@ -18,7 +18,6 @@ for i in quelist:
     with open("Query/" + i) as f:
         s = f.read()
         brkdown = s.replace("-1","").split()
-        word += brkdown
         queryword += [brkdown]
     
 for i in doclist:
@@ -28,66 +27,43 @@ for i in doclist:
         f.readline()
         s = f.read()
         brkdown = s.replace("-1","").split()
+        word += brkdown
         documentword += [brkdown]
         documentlennorm.append(len(brkdown))
 
 documentlennorm = np.array(documentlennorm)
 documentlennorm = documentlennorm / np.mean(documentlennorm)
-np.savetxt('norm.txt', documentlennorm)
-word = list(set(word))
 
-docuvec = []
-quervec = []
-idf = []
+queryword = np.array(queryword)
+documentword = np.array(documentword)
+docuidf = []
 
 for i in range(len(quelist)):
     tmpvec = []
-    for j in range(len(word)):
-        t = queryword[i].count(word[j])
-        if t > 0:
-            tmpvec += [t / len(queryword[i])]
-        else:
-            tmpvec += [0]
-    quervec += [(np.array(tmpvec))]
-
-for i in range(len(doclist)):
-    tmpvec = []
-    for j in range(len(word)):
-        t = documentword[i].count(word[j])
-        if t > 0:
-            tmpvec += [math.log10(1 + t / len(documentword[i]))]
-        else:
-            tmpvec += [0]
-    docuvec += [(np.array(tmpvec))]
-
-quervec = np.array(quervec)
-docuvec = np.array(docuvec)
-# np.savetxt("queryTF.txt", quervec)
-# np.savetxt("documentTF.txt", docuvec)
-
-docuidf = []
-
-for i in range(len(word)):
-    count = 0
-    for j in range(len(documentword)):
-        if word[i] in documentword[j]:
-            count += 1
-    try:
-        docuidf += [np.array(np.log10(len(doclist) / (count+1)))]
-    except:
-        docuidf += [0]
+    for j in range(len(queryword[i])):
+        t = 0
+        for k in range(len(doclist)):
+            if queryword[i][j] in documentword[k]:
+                t += 1
+        tmpvec += [np.array(np.log10((len(doclist) - t + 0.5) / (t + 0.5)))]
+    docuidf += [(np.array(tmpvec))]
 
 docuidf = np.array(docuidf)
-
-docuvec = np.array(docuvec) * np.array(docuidf)
-quervec = np.array(quervec) * np.array(docuidf)
+k1 = 1.5
+b = 1.0
 
 output = "Query,RetrievedDocuments\n"
 for i in range(len(quelist)):
     output += quelist[i]+","
     scores = []
     for j in range(len(doclist)):
-        scores += [np.dot(quervec[i],docuvec[j]) / (np.linalg.norm(quervec[i]) * np.linalg.norm(docuvec[j]))]
+        score = 0
+        docCounter = Counter(documentword[j])
+        queCounter = Counter(queryword[i])
+        for k in range(len(queryword[i])):
+            rawtf = docCounter[queryword[i][k]]
+            score += docuidf[i][k] * (rawtf * (k1 + 1) / (rawtf + k1 * (1 - b + b * documentlennorm[j])))
+        scores += [score]
     n,fileName = zip(*sorted(zip(scores,doclist)))
     fileName = fileName[::-1]
     for j in range(len(fileName)):
