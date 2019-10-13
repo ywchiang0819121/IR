@@ -45,12 +45,18 @@ for i in range(len(quelist)):
         for k in range(len(doclist)):
             if queryword[i][j] in documentword[k]:
                 t += 1
-        tmpvec += [np.array(np.log10((len(doclist) - t + 0.5) / (t + 0.5)))]
+        value = np.log10((len(doclist) - t + 0.5) / (t + 0.5))
+        if value > 0.25:
+            tmpvec += [np.array(value)]
+        else:
+            tmpvec += [np.array(0.25)]
     docuidf += [(np.array(tmpvec))]
 
 docuidf = np.array(docuidf)
-k1 = 1.5
-b = 1.0
+print(docuidf)
+exit()
+k1 = 1.4
+b = 0.9
 
 output = "Query,RetrievedDocuments\n"
 for i in range(len(quelist)):
