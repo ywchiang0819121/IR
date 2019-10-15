@@ -53,11 +53,12 @@ for i in range(len(quelist)):
     docuidf += [(np.array(tmpvec))]
 
 docuidf = np.array(docuidf)
-print(docuidf)
-exit()
-k1 = 1.4
-b = 0.9
-
+# docuidf[docuidf <= 0] = np.am
+# print(docuidf)
+k1 = 2.0
+k3 = 200
+b = 1
+dta = 1
 output = "Query,RetrievedDocuments\n"
 for i in range(len(quelist)):
     output += quelist[i]+","
@@ -68,7 +69,9 @@ for i in range(len(quelist)):
         queCounter = Counter(queryword[i])
         for k in range(len(queryword[i])):
             rawtf = docCounter[queryword[i][k]]
-            score += docuidf[i][k] * (rawtf * (k1 + 1) / (rawtf + k1 * (1 - b + b * documentlennorm[j])))
+            quetf = queCounter[queryword[i][k]]
+            # score += docuidf[i][k] * ((rawtf / k1 * (1 - b + b * documentlennorm[j])) * (k1 + 1) / (rawtf + k1 * (1 - b + b * documentlennorm[j])))
+            score += docuidf[i][k] * (k1 + 1) * (rawtf / (1 - b + b * documentlennorm[j])) / (k1 + (k1 + 1) * (rawtf / (1 - b + b * documentlennorm[j]))) * (k3 + 1) * quetf / (k3 + quetf)
         scores += [score]
     n,fileName = zip(*sorted(zip(scores,doclist)))
     fileName = fileName[::-1]
