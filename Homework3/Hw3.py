@@ -7,7 +7,7 @@ import numpy as np
 from scipy.sparse import coo_matrix,csr_matrix
 from sklearn.feature_extraction.text import CountVectorizer
 
-TOPICNUMBER = 80
+TOPICNUMBER = 128
 MAX_ITER = 10000
 THRESH = 1e-4
 FOLDIN_THRESH = 1e-8
@@ -22,7 +22,7 @@ BGLM_path = './BGLM.txt'
 def normalize(array):
       return array / array.sum(axis=0, keepdims=True)
 
-def EM_trainging(row, col, word_doc, word_topic, topic_doc, isFoldin = False):
+def EM_training(row, col, word_doc, word_topic, topic_doc, isFoldin = False):
     print('EM training...')
     L_last = 0
     thresh = None
@@ -60,7 +60,7 @@ def E_step(row, col, word_doc, word_topic, topic_doc, E_result):
             joint_prob[j] = word_topic[wi][j] * topic_doc[j][dj]
             joint_prob_sum += joint_prob[j]
         for j in range(TOPICNUMBER):
-            if joint_prob_sum = 0:
+            if joint_prob_sum == 0:
                 E_result[j][i] = 0
             else:
                 E_result[j][i] = joint_prob[j] / joint_prob_sum
@@ -80,7 +80,7 @@ def M_step(row, col, word_doc, word_topic, topic_doc, E_result, isFoldin):
         for j in range(TOPICNUMBER):
             result = word_doc[i] * E_result[j][i]
             topic_doc_sum[dj] += result
-            topic_doc_temp[k][dj] += result
+            topic_doc_temp[j][dj] += result
             if isFoldin == False:
                 word_topic_sum[j] += result
                 word_topic_temp[wi][j] += result
