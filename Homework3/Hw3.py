@@ -7,9 +7,9 @@ import numpy as np
 from scipy.sparse import coo_matrix,csr_matrix
 from sklearn.feature_extraction.text import CountVectorizer
 
-TOPICNUMBER = 128
+TOPICNUMBER = 80
 MAX_ITER = 10000
-THRESH = 1e-4
+THRESH = 1e-8
 FOLDIN_THRESH = 1e-8
 ALPHA = 0.2
 BETA = 0.6
@@ -87,7 +87,7 @@ def M_step(row, col, word_doc, word_topic, topic_doc, E_result, isFoldin):
     for i in range(docNum):
         for j in range(TOPICNUMBER):
             if topic_doc_sum[i] != 0:
-                topic_doc_temp[j][i] /= topic_doc_sum[j]
+                topic_doc_temp[j][i] /= topic_doc_sum[i]
     if isFoldin == False:
         for i in range(TOPICNUMBER):
             for j in range(wordNum):
