@@ -7,7 +7,7 @@ import numpy as np
 from scipy.sparse import coo_matrix,csr_matrix
 from sklearn.feature_extraction.text import CountVectorizer
 
-TOPICNUMBER = 1024
+TOPICNUMBER = 896
 MAX_ITER = 10000
 THRESH = 1e-4
 FOLDIN_THRESH = 1e-8
