@@ -7,7 +7,7 @@ import numpy as np
 from scipy.sparse import coo_matrix,csr_matrix
 from sklearn.feature_extraction.text import CountVectorizer
 
-TOPICNUMBER = 896
+TOPICNUMBER = 128
 MAX_ITER = 10000
 THRESH = 1e-4
 FOLDIN_THRESH = 1e-8
@@ -185,7 +185,7 @@ if __name__ == '__main__':
                     log_scores += np.log(BGLM[word])                    
 
             ranked_doc_index = np.argsort(log_scores)[::-1]
-            print(ranked_doc_index)
+            print(ranked_doc_index.shape, query_index)
 
             # for word in query[query_index]:
 
