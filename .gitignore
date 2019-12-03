@@ -2,3 +2,8 @@ Homework3/output.csv
 Homework5/doc/*
 Homework5/.vscode/settings.json
 Homework5/uncased_L-12_H-768_A-12.zip
+Homework5/uncased_L-12_H-768_A-12/bert_config.json
+Homework5/uncased_L-12_H-768_A-12/bert_model.ckpt.data-00000-of-00001
+Homework5/uncased_L-12_H-768_A-12/bert_model.ckpt.index
+Homework5/uncased_L-12_H-768_A-12/bert_model.ckpt.meta
+Homework5/uncased_L-12_H-768_A-12/vocab.txt
