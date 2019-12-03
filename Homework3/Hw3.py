@@ -2,12 +2,12 @@ import os
 import math
 import time
 import itertools
-from numba import jit
+from numba import jit, prange
 import numpy as np
 from scipy.sparse import coo_matrix,csr_matrix
 from sklearn.feature_extraction.text import CountVectorizer
 
-TOPICNUMBER = 80
+TOPICNUMBER = 896
 MAX_ITER = 10000
 THRESH = 1e-4
 FOLDIN_THRESH = 1e-8
@@ -22,7 +22,7 @@ BGLM_path = './BGLM.txt'
 def normalize(array):
       return array / array.sum(axis=0, keepdims=True)
 
-def EM_trainging(row, col, word_doc, word_topic, topic_doc, isFoldin = False):
+def EM_training(row, col, word_doc, word_topic, topic_doc, isFoldin = False):
     print('EM training...')
     L_last = 0
     thresh = None
@@ -49,24 +49,24 @@ def EM_trainging(row, col, word_doc, word_topic, topic_doc, isFoldin = False):
     return topic_doc, word_topic
 
         
-@jit(nopython=True)
+@jit(nopython=True, parallel=True)
 def E_step(row, col, word_doc, word_topic, topic_doc, E_result):
-    for i in range(len(word_doc)):
+    for i in prange(len(word_doc)):
         dj, wi = row[i], col[i]
         joint_prob = np.zeros(TOPICNUMBER)
         joint_prob_sum = 0
 
-        for j in range(TOPICNUMBER):
+        for j in prange(TOPICNUMBER):
             joint_prob[j] = word_topic[wi][j] * topic_doc[j][dj]
             joint_prob_sum += joint_prob[j]
-        for j in range(TOPICNUMBER):
-            if joint_prob_sum = 0:
+        for j in prange(TOPICNUMBER):
+            if joint_prob_sum == 0:
                 E_result[j][i] = 0
             else:
                 E_result[j][i] = joint_prob[j] / joint_prob_sum
     return E_result
 
-@jit(nopython=True)
+@jit(nopython=True, parallel=True)
 def M_step(row, col, word_doc, word_topic, topic_doc, E_result, isFoldin):
     wordNum = len(word_topic)
     docNum  = len(topic_doc[0])
@@ -75,33 +75,33 @@ def M_step(row, col, word_doc, word_topic, topic_doc, E_result, isFoldin):
     word_topic_sum  = np.zeros(TOPICNUMBER)
     topic_doc_sum   = np.zeros(docNum)
 
-    for i in range(len(word_doc)):
+    for i in prange(len(word_doc)):
         dj, wi = row[i], col[i]
-        for j in range(TOPICNUMBER):
+        for j in prange(TOPICNUMBER):
             result = word_doc[i] * E_result[j][i]
             topic_doc_sum[dj] += result
-            topic_doc_temp[k][dj] += result
+            topic_doc_temp[j][dj] += result
             if isFoldin == False:
                 word_topic_sum[j] += result
                 word_topic_temp[wi][j] += result
-    for i in range(docNum):
-        for j in range(TOPICNUMBER):
+    for i in prange(docNum):
+        for j in prange(TOPICNUMBER):
             if topic_doc_sum[i] != 0:
-                topic_doc_temp[j][i] /= topic_doc_sum[j]
+                topic_doc_temp[j][i] /= topic_doc_sum[i]
     if isFoldin == False:
-        for i in range(TOPICNUMBER):
-            for j in range(wordNum):
+        for i in prange(TOPICNUMBER):
+            for j in prange(wordNum):
                 if word_topic_sum[i] != 0:
                     word_topic_temp[j][i] /= word_topic_sum[i]
     return topic_doc_temp, word_topic_temp
 
-@jit(nopython=True)
+@jit(nopython=True, parallel=True)
 def get_L(row, col, word_doc, word_topic, topic_doc):
     L = 0
-    for i in range(len(word_doc)):
+    for i in prange(len(word_doc)):
         di, wi = row[i], col[i]
         result = 0
-        for j in range(TOPICNUMBER):
+        for j in prange(TOPICNUMBER):
             result += float(word_topic[wi][j]) * float(topic_doc[j][di])
         result *= float(1 / len(topic_doc[0]))
         if result != 0:
