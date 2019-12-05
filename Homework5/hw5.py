@@ -45,11 +45,9 @@ class batchGen:
             batch_doc2 = []
             batch_query = []
             batch_labels = []
-            # Generate a batch of data
             for b in range(self.batch_size):
                 if(i == 0): # Shuffle the dataset
                     np.random.shuffle(self.iter_index)
-
                 index = self.iter_index[i] # choose a data
                 doc, query, label = self.GetData(index)
                 while doc == None:
@@ -91,7 +89,6 @@ def load_label():
     s = n // 10 * 9
     return ans[:s], ans[s:]
 
-
 model = load_trained_model_from_checkpoint(configPth, checkpointPth)
 first = keras.layers.Input(shape=(512,))
 firstA = keras.layers.Input(shape=(512,))
@@ -103,7 +100,7 @@ p = keras.layers.Dense(1, activation='sigmoid')(x)
 model = keras.models.Model([first, firstA], p)
 model.compile(
     loss='binary_crossentropy',
-    optimizer=keras.optimizers.Adam(0.01),
+    optimizer=keras.optimizers.Adam(0.005),
     metrics=['accuracy']
 )
 model.summary()
@@ -120,5 +117,42 @@ model.fit_generator(generator=train_gen.flow(),
                     steps_per_epoch=max(1, len(train_gen)//8),
                     epochs=999999,
                     verbose=1,
-                    callbacks=[checkpoint, reduce_lr]
-                    )
+                    callbacks=[checkpoint, reduce_lr])
+
+model.load_weights('model.h5')
+token = Tokenizer(token_dict)
+
+with open('ans.csv', mode='w') as f:
+    f.write("Query,RetrievedDocuments\n")
+    index = 0
+    quedocpair = {}
+    with open('result.csv', mode='r') as q:
+        q.readline()
+        lines = q.readlines()
+        for qulist in lines:
+            qnum, docs = qulist.split(',')
+            doclist = docs.split(' ')
+            quedocpair[qnum] = doclist
+            query = open('./test/query/' + str(qnum)).read()
+            length = 0
+            for doc in doclist:
+                docinhalt = open('./doc/'+ str(doc)).read()
+                codea, codeb = token.encode(first=query, second=docinhalt, max_len=512)
+                codea = np.array(codea)
+                codea = np.expand_dims(codea, axis=0)
+                codeb = np.array(codeb)
+                codeb = np.expand_dims(codeb, axis=0)
+                if model.predict([codea, codeb])[0] < 0.75:
+                    print(qnum, doc)
+                    quedocpair[qnum].remove(doc)
+                else:
+                    length += 1
+                if length > 100:
+                    break    
+            print(qnum)
+    for key, value in quedocpair.items():
+        rank = ' '.join(value)
+        f.write('%s,%s\n' % (key, rank))
+
+
+
